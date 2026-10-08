@@ -1,98 +1,196 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useEffect, useRef } from 'react';
+import {
+  Animated,
+  Image,
+  Platform,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+export default function LandingScreen() {
+  const router = useRouter();
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+  // Animation values for Floating & Scaling
+  const floatAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  // Arrow Button Press Animation
+  const buttonScale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.parallel([
+        Animated.sequence([
+          Animated.timing(floatAnim, {
+            toValue: -12,
+            duration: 1800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(floatAnim, {
+            toValue: 0,
+            duration: 1800,
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.sequence([
+          Animated.timing(scaleAnim, {
+            toValue: 1.05,
+            duration: 1800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(scaleAnim, {
+            toValue: 1,
+            duration: 1800,
+            useNativeDriver: true,
+          }),
+        ]),
+      ])
+    ).start();
+  }, [floatAnim, scaleAnim]);
+
+  const handlePressIn = () => {
+    Animated.spring(buttonScale, {
+      toValue: 0.9,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(buttonScale, {
+      toValue: 1,
+      friction: 4,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handleGetStarted = () => {
+    router.push('/login');
+  };
+
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.contentContainer}>
+        {/* Animated Circular Container */}
+        <Animated.View
+          style={[
+            styles.iconCircle,
+            {
+              transform: [
+                { translateY: floatAnim },
+                { scale: scaleAnim },
+              ],
+            },
+          ]}
+        >
+          <Image
+            source={require('../../assets/images/avatar.jpg')}
+            style={styles.avatarImage}
+            resizeMode="cover"
+          />
+        </Animated.View>
+
+        {/* App Branding */}
+        <Text style={styles.title}>LifeLog</Text>
+        <Text style={styles.subtitle}>Your automated daily companion</Text>
+      </View>
+
+      {/* Centered Circular Arrow Button */}
+      <View style={styles.buttonContainer}>
+        <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
+          <TouchableOpacity
+            style={styles.arrowButton}
+            activeOpacity={0.85}
+            onPressIn={handlePressIn}
+            onPressOut={handlePressOut}
+            onPress={handleGetStarted}
+          >
+            <Ionicons name="arrow-forward" size={28} color="#3b3636" />
+          </TouchableOpacity>
+        </Animated.View>
+      </View>
+    </SafeAreaView>
   );
 }
 
-export default function HomeScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
-
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
-  );
-}
+// iOS Font Configuration
+const iosFont = Platform.select({
+  ios: 'System',
+  android: 'sans-serif-medium',
+  default: 'System',
+});
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+    backgroundColor: '#010101',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingVertical: 40,
   },
-  safeArea: {
+  contentContainer: {
     flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
-    alignItems: 'center',
     justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+    alignItems: 'center',
+  },
+  iconCircle: {
+    width: 250,
+    height: 250,
+    borderRadius: 125,
+    backgroundColor: '#1E1E1E',
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+    marginBottom: 32,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 6,
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
   },
   title: {
+    fontSize: 34,
+    fontWeight: '800',
+    fontFamily: iosFont,
+    letterSpacing: -0.8,
+    color: '#fdf9f9',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    fontWeight: '400',
+    fontFamily: iosFont,
+    letterSpacing: -0.2,
+    color: '#878788',
     textAlign: 'center',
   },
-  code: {
-    textTransform: 'uppercase',
+  buttonContainer: {
+    width: '100%',
+    alignItems: 'center', // Centers the circular button
+    marginBottom: 20,
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+  // Circular Arrow Button
+  arrowButton: {
+    width: 68,
+    height: 68,
+    borderRadius: 34, // Perfect Circle Radius
+    backgroundColor: '#f4e247',
+    justifyContent: 'center',
+    alignItems: 'center',
+    // Soft drop shadow
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 5,
   },
 });
